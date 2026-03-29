@@ -1,158 +1,2273 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-
-<head>
-    <meta charset="UTF-8">
-
-    <title>Pointeur Corp</title>
-
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Re:One</title>
     <style>
-        body {
-            background-color: aqua;
+      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap");
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg-deep: #060d1a;
+        --bg-mid: #0f1e35;
+        --bg-card: #0d1a2fee;
+        --accent: #38bdf8;
+        --accent2: #f97316;
+        --danger: #ef4444;
+        --good: #22c55e;
+        --text: #e2e8f0;
+        --text-dim: #94a3b8;
+        --border: #38bdf8;
+      }
+
+      body {
+        min-height: 100vh;
+        background: var(--bg-deep);
+        background-image:
+          radial-gradient(
+            ellipse 80% 60% at 50% -10%,
+            #0ea5e933 0%,
+            transparent 70%
+          ),
+          repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 39px,
+            #1e3a5f22 40px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 39px,
+            #1e3a5f22 40px
+          );
+        color: var(--text);
+        font-family: "Rajdhani", sans-serif;
+        font-size: 17px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 30px 16px 60px;
+      }
+
+      #game {
+        width: 100%;
+        max-width: 760px;
+      }
+      /* ── HEADER ── */
+
+      #header {
+        text-align: center;
+        margin-bottom: 28px;
+      }
+
+      #header h1 {
+        font-family: "Orbitron", monospace;
+        font-size: 2.4rem;
+        font-weight: 900;
+        letter-spacing: 0.15em;
+        color: var(--accent);
+        text-shadow:
+          0 0 24px #38bdf888,
+          0 0 60px #38bdf844;
+      }
+
+      #header .sub {
+        font-size: 0.85rem;
+        letter-spacing: 0.3em;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        margin-top: 4px;
+      }
+      /* ── PASSAGE ── */
+
+      .passage {
+        display: none;
+        animation: fadeIn 0.35s ease;
+      }
+
+      .passage.active {
+        display: block;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
         }
-
-        p {
-            font-family: Arial, Helvetica, sans-serif;
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
+      }
+      /* ══════════════════════════════════════════
+       VISUAL NOVEL CARD
+    ══════════════════════════════════════════ */
 
+      .vn-card {
+        border: 1.5px solid var(--border);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow:
+          0 0 40px #38bdf81a,
+          0 8px 32px #00000066;
+        background: var(--bg-deep);
+      }
+      /* ── SCENE STAGE (background + characters) ── */
 
-        @keyframes myAnimation {
-            from {
-                background-color: yellow;
-                translate: 20vw;
-            }
+      .vn-stage {
+        position: relative;
+        width: 100%;
+        height: 400px;
+        overflow: hidden;
+        background: linear-gradient(
+          135deg,
+          #0a1628 0%,
+          #0f2040 50%,
+          #091525 100%
+        );
+      }
+      /* Background image */
 
-            to {
-                background-color: red;
-            }
-        }
+      .vn-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(0.65) saturate(0.85);
+      }
+      /* Gradient fade bottom */
 
-        /* The element to apply the animation to */
-        table {
-            background-color: red;
-            animation-name: myAnimation;
-            animation-duration: 3s;
-            animation-iteration-count: 1;
-        }
+      .vn-stage::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 160px;
+        background: linear-gradient(to bottom, transparent, var(--bg-deep));
+        pointer-events: none;
+        z-index: 2;
+      }
+      /* Character portraits */
+
+      .vn-chars {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        padding: 0 20px;
+        z-index: 3;
+        pointer-events: none;
+      }
+
+      .vn-char {
+        height: 90%;
+        object-fit: contain;
+        object-position: bottom center;
+        filter: drop-shadow(0 8px 24px #000a);
+        transition:
+          filter 0.3s,
+          transform 0.3s;
+        flex-shrink: 0;
+        max-width: 45%;
+      }
+      /* Yuki = left character */
+
+      .vn-char.left {
+        align-self: flex-end;
+      }
+      /* NPC  = right character */
+
+      .vn-char.right {
+        align-self: flex-end;
+      }
+      /* Dim inactive speaker */
+
+      .vn-char.dim {
+        filter: drop-shadow(0 8px 24px #000a) brightness(0.45) grayscale(0.4);
+      }
+      /* Scene label overlay */
+
+      .vn-scene-label {
+        position: absolute;
+        top: 14px;
+        left: 20px;
+        z-index: 4;
+        font-family: "Orbitron", monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.3em;
+        color: #ffffffbb;
+        text-transform: uppercase;
+        background: #00000055;
+        padding: 4px 10px;
+        border-radius: 20px;
+        backdrop-filter: blur(4px);
+        border: 1px solid #ffffff22;
+      }
+      /* ── DIALOGUE BOX ── */
+
+      .vn-box {
+        background: var(--bg-card);
+        border-top: 1.5px solid #38bdf844;
+        padding: 18px 24px 20px;
+      }
+      /* Speaker name tag */
+
+      .vn-speaker {
+        font-family: "Orbitron", monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.18em;
+        color: var(--accent);
+        text-transform: uppercase;
+        margin-bottom: 6px;
+        display: inline-block;
+        padding: 3px 12px;
+        background: #38bdf812;
+        border: 1px solid #38bdf840;
+        border-radius: 4px;
+      }
+
+      .vn-speaker.mc {
+        color: var(--accent2);
+        background: #f9731612;
+        border-color: #f9731640;
+      }
+
+      .vn-speaker.narr {
+        color: #a78bfa;
+        background: #7c3aed12;
+        border-color: #7c3aed40;
+      }
+
+      .vn-speaker.warn {
+        color: #f59e0b;
+        background: #f59e0b12;
+        border-color: #f59e0b40;
+      }
+      /* Dialogue lines */
+
+      .vn-line {
+        margin: 8px 0;
+        padding: 10px 14px;
+        border-left: 3px solid var(--accent);
+        background: #0ea5e90d;
+        border-radius: 0 8px 8px 0;
+        line-height: 1.55;
+        font-size: 1rem;
+      }
+
+      .vn-line.mc {
+        border-left-color: var(--accent2);
+        background: #f9731610;
+      }
+
+      .vn-line.narr {
+        border-left-color: #7c3aed;
+        background: #7c3aed10;
+        font-style: italic;
+        color: var(--text-dim);
+      }
+
+      .vn-line.warn {
+        border-left-color: #f59e0b;
+        background: #f59e0b10;
+      }
+
+      .vn-line .speaker {
+        font-family: "Orbitron", monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.15em;
+        color: var(--accent);
+        margin-bottom: 4px;
+        display: block;
+        text-transform: uppercase;
+      }
+
+      .vn-line.mc .speaker {
+        color: var(--accent2);
+      }
+
+      .vn-line.narr .speaker {
+        color: #a78bfa;
+      }
+
+      .vn-line.warn .speaker {
+        color: #f59e0b;
+      }
+
+      p.narr-text {
+        color: var(--text-dim);
+        font-style: italic;
+        margin: 10px 0;
+        line-height: 1.6;
+      }
+      /* ── CHOICES ── */
+
+      .choices {
+        margin-top: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .choice-btn {
+        display: block;
+        width: 100%;
+        padding: 13px 20px;
+        background: #0f1e35;
+        border: 1.5px solid var(--accent);
+        border-radius: 10px;
+        color: var(--text);
+        font-family: "Rajdhani", sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-align: left;
+        cursor: pointer;
+        transition:
+          background 0.18s,
+          color 0.18s,
+          transform 0.12s,
+          box-shadow 0.18s;
+      }
+
+      .choice-btn::before {
+        content: "▶";
+        margin-right: 10px;
+        font-size: 0.7rem;
+        opacity: 0.6;
+      }
+
+      .choice-btn:hover {
+        background: var(--accent);
+        color: #060d1a;
+        transform: translateX(4px);
+        box-shadow: 0 0 20px #38bdf866;
+      }
+
+      .choice-btn.danger {
+        border-color: var(--danger);
+      }
+
+      .choice-btn.danger:hover {
+        background: var(--danger);
+        box-shadow: 0 0 20px #ef444466;
+      }
+
+      .choice-btn.good {
+        border-color: var(--good);
+      }
+
+      .choice-btn.good:hover {
+        background: var(--good);
+        box-shadow: 0 0 20px #22c55e66;
+      }
+      /* ── ENDING ── */
+
+      .ending-box {
+        text-align: center;
+        padding: 10px 0 12px;
+      }
+
+      .ending-box h2 {
+        font-family: "Orbitron", monospace;
+        font-size: 1.5rem;
+        letter-spacing: 0.12em;
+        margin-bottom: 10px;
+      }
+
+      .ending-box.bad h2 {
+        color: var(--danger);
+        text-shadow: 0 0 20px #ef444466;
+      }
+
+      .ending-box.good h2 {
+        color: var(--good);
+        text-shadow: 0 0 20px #22c55e66;
+      }
+
+      .ending-badge {
+        display: inline-block;
+        padding: 6px 18px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        letter-spacing: 0.15em;
+        font-family: "Orbitron", monospace;
+        margin-bottom: 18px;
+      }
+
+      .bad .ending-badge {
+        background: #ef444422;
+        border: 1px solid var(--danger);
+        color: var(--danger);
+      }
+
+      .good .ending-badge {
+        background: #22c55e22;
+        border: 1px solid var(--good);
+        color: var(--good);
+      }
+      /* ── RESTART ── */
+
+      .restart-btn {
+        margin-top: 20px;
+        background: none;
+        border: 1.5px solid var(--text-dim);
+        color: var(--text-dim);
+        border-radius: 8px;
+        padding: 10px 24px;
+        font-family: "Rajdhani", sans-serif;
+        font-size: 0.9rem;
+        letter-spacing: 0.1em;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      /* ── BOOK BUTTON ── */
+      #book-btn {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        background: var(--bg-mid);
+        border: 2px solid var(--accent);
+        color: var(--accent);
+        font-size: 1.6rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow:
+          0 0 22px #38bdf844,
+          0 4px 16px #00000066;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+        z-index: 1000;
+      }
+      #book-btn:hover {
+        transform: scale(1.12);
+        box-shadow:
+          0 0 36px #38bdf877,
+          0 6px 20px #00000088;
+      }
+      #book-btn .book-count {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        background: var(--accent2);
+        color: #fff;
+        font-family: "Orbitron", monospace;
+        font-size: 0.6rem;
+        font-weight: 700;
+        min-width: 20px;
+        height: 20px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+      }
+
+      /* ── GUIDE MODAL ── */
+      #guide-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: #000000bb;
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        backdrop-filter: blur(4px);
+      }
+      #guide-overlay.open {
+        display: flex;
+        animation: fadeIn 0.2s ease;
+      }
+      #guide-modal {
+        background: var(--bg-mid);
+        border: 1.5px solid var(--accent);
+        border-radius: 18px;
+        width: 100%;
+        max-width: 820px;
+        max-height: 88vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow:
+          0 0 60px #38bdf833,
+          0 20px 60px #000000aa;
+      }
+      #guide-header {
+        padding: 20px 26px 16px;
+        border-bottom: 1px solid #38bdf830;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+      #guide-header h2 {
+        font-family: "Orbitron", monospace;
+        font-size: 1.1rem;
+        color: var(--accent);
+        letter-spacing: 0.15em;
+      }
+      #guide-header .guide-sub {
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        margin-top: 2px;
+      }
+      #guide-close {
+        background: none;
+        border: 1px solid #38bdf840;
+        color: var(--text-dim);
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-family: "Rajdhani", sans-serif;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+      }
+      #guide-close:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      #guide-body {
+        display: flex;
+        overflow: hidden;
+        flex: 1;
+      }
+      #guide-list {
+        width: 230px;
+        flex-shrink: 0;
+        border-right: 1px solid #38bdf820;
+        overflow-y: auto;
+        padding: 12px 0;
+      }
+      .guide-item {
+        padding: 12px 16px;
+        cursor: pointer;
+        border-left: 3px solid transparent;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .guide-item:hover {
+        background: #38bdf808;
+      }
+      .guide-item.active {
+        border-left-color: var(--accent);
+        background: #38bdf810;
+      }
+      .guide-item.locked {
+        cursor: default;
+        opacity: 0.5;
+      }
+      .guide-item.locked:hover {
+        background: none;
+      }
+      .guide-item .gi-icon {
+        font-size: 1.1rem;
+        flex-shrink: 0;
+      }
+      .guide-item .gi-label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        line-height: 1.3;
+        color: var(--text);
+      }
+      .guide-item.bad-end .gi-label {
+        color: #fc8181;
+      }
+      .guide-item.good-end .gi-label {
+        color: #68d391;
+      }
+      .guide-item.locked .gi-label {
+        color: var(--text-dim);
+      }
+
+      #guide-detail {
+        flex: 1;
+        overflow-y: auto;
+        padding: 22px 26px;
+      }
+      .gd-title {
+        font-family: "Orbitron", monospace;
+        font-size: 1.2rem;
+        margin-bottom: 6px;
+      }
+      .gd-title.bad {
+        color: var(--danger);
+      }
+      .gd-title.good {
+        color: var(--good);
+      }
+      .gd-badge {
+        display: inline-block;
+        font-size: 0.72rem;
+        padding: 3px 12px;
+        border-radius: 999px;
+        font-family: "Orbitron", monospace;
+        margin-bottom: 16px;
+      }
+      .gd-badge.bad {
+        background: #ef444422;
+        border: 1px solid var(--danger);
+        color: var(--danger);
+      }
+      .gd-badge.good {
+        background: #22c55e22;
+        border: 1px solid var(--good);
+        color: var(--good);
+      }
+      .gd-section {
+        margin-top: 16px;
+      }
+      .gd-section-title {
+        font-family: "Orbitron", monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.2em;
+        color: var(--accent);
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid #38bdf830;
+      }
+      .gd-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .gd-list li {
+        font-size: 0.9rem;
+        color: var(--text-dim);
+        line-height: 1.5;
+        padding-left: 14px;
+        position: relative;
+      }
+      .gd-list li::before {
+        content: "›";
+        position: absolute;
+        left: 0;
+        color: var(--accent);
+      }
+      .gd-list.good-list li::before {
+        color: var(--good);
+      }
+      .gd-locked-msg {
+        color: var(--text-dim);
+        font-style: italic;
+        margin-top: 40px;
+        text-align: center;
+        font-size: 1rem;
+      }
+
+      .restart-btn:hover {
+        border-color: var(--text);
+        color: var(--text);
+      }
+      /* ── ACCUEIL SPECIAL ── */
+
+      .accueil-stage {
+        position: relative;
+        height: 320px;
+        overflow: hidden;
+        background: #060d1a;
+      }
+
+      .accueil-stage img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .accueil-stage::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 120px;
+        background: linear-gradient(to bottom, transparent, var(--bg-deep));
+        z-index: 2;
+      }
     </style>
-</head>
+  </head>
 
-<body>
-    <img src="PC_.png" alt="PointeurCorp.png" width="600">
-    <h1>L'entreprise</h1>
-    <p>
-        Au sein de la Pointeur Corp, nous privilégions la qualité, l'innovation et le bien-être Nous somme une équipe
-        soudée qui relève chaque défi avec enthousiasme pour satisfaire nos clients.
-        Cette initiative est née suite à notre premier cours de programmation, nous nous sommes mis en équipe et depuis
-        rien n'a changé, jamais! Notre expérience est plus que satisfaite, toutes ces années de l'abeure nous on permis
-        d'obtenir des résultats plus que satisfaisant pour chacun de nos clients. Ici, nous ne parlons pas d'échec mais
-        de changement.
-    </p>
+  <body>
+    <div id="game">
+      <div id="header">
+        <h1>Re:One</h1>
+        <div class="sub">Une journée, des choix, des conséquences</div>
+      </div>
 
-    <h1>Notre équipe</h1>
-    <div class="anthonyGoffin">
-        <table>
-            <tr>
-                <th>
-                    <h2>
-                        Anthony Goffin
-                    </h2>
+      <!-- ══════════════════════════════════════════
+       SCÈNE 0 — ACCUEIL
+  ══════════════════════════════════════════ -->
+      <div class="passage active" id="p-accueil">
+        <div class="vn-card"></div>
+        <div class="vn-box">
+          <img
+            src="img/affiche.png"
+            style="
+              width: 100%;
+              max-width: 360px;
+              margin: 0 auto 18px;
+              display: block;
+            "
+            onerror="this.style.display = 'none'"
+          />
+          <div class="ending-box good" style="padding-top: 0">
+            <h2>Re:One</h2>
+          </div>
+          <p class="narr-text" style="text-align: center">
+            Une journée ordinaire peut changer une vie. Chaque choix a une
+            conséquence.
+          </p>
+          <div class="choices">
+            <button class="choice-btn" onclick="go('p-reveil')">
+              Commencer
+            </button>
+          </div>
+        </div>
+      </div>
 
-                    <img src="antho.png" alt="Broked" width="300">
+      <!-- ══════════════════════════════════════════
+       SCÈNE 1 — RÉVEIL
+  ══════════════════════════════════════════ -->
+      <div class="passage" id="p-reveil">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/clock.jpg"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 1 · Matin</div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Le réveil est compliqué… Une
+              nouvelle journée commence, comme les autres.
+            </div>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-sdb')">Se lever</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-                </th>
-                <th>
-                    <p>Anthony est un programmeur en herbe rien ne l'arrête même pas un return, écouter ses conseilles
-                        mêne l'équipe à la réussite. Grâce à lui les projets sont rendu en temps et en heure. Sa
-                        capacité à motiver nos équipes et ses compétences langagière sont plus qu'impressinnantes.
-                        L'attaque est sa grande spécialité laissez le abbatre l'ennemi</p>
-                </th>
-            </tr>
-        </table>
+      <!-- ══════════════════════════════════════════
+       SCÈNE 2 — SALLE DE BAIN
+  ══════════════════════════════════════════ -->
+      <div class="passage" id="p-sdb">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/scène_sdb.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 2 · Salle de bain</div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Vous vous regardez dans le
+              miroir. Une journée de plus à affronter.
+            </div>
+            <p class="narr-text">Où allez-vous ?</p>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-salon')">
+                Aller au travail
+              </button>
+              <button class="choice-btn" onclick="go('p-sdb-boucle')">
+                Aller à l'école
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Boucle salle de bain -->
+      <div class="passage" id="p-sdb-boucle">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/scène_sdb.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 2 · Salle de bain</div>
+            <div class="vn-chars">
+              <img class="vn-char left" onerror="this.style.display = 'none'" />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Attends… je ne suis plus à
+              l'école. Je dois aller au travail.
+            </div>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-salon')">
+                Aller au travail
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+       SCÈNE 3 — SALON / TÉLÉ
+  ══════════════════════════════════════════ -->
+      <div class="passage" id="p-salon">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/scène_TV.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 3 · Salon</div>
+            <div class="vn-chars">
+              <img class="vn-char left" onerror="this.style.display = 'none'" />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Le présentateur parle d'un
+              sujet important à la télévision.
+            </div>
+            <p class="narr-text">Souhaitez-vous regarder la télé un moment ?</p>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-tv-oui')">
+                Regarder la télé
+              </button>
+              <button class="choice-btn" onclick="go('p-porte-demarcheur')">
+                Partir directement
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCÈNE 3 OUI — contenu de la télé -->
+      <div class="passage" id="p-tv-oui">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/scène_TV.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 3 · Télévision</div>
+            <div class="vn-chars">
+              <img class="vn-char left" onerror="this.style.display = 'none'" />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line">
+              <span class="speaker">Présentateur</span>Aujourd'hui nous avons
+              une nouvelle fascinante pour la population…
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Rien n'est jamais fascinant de
+              nos jours.
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Présentateur</span>Des entreprises de
+              loterie envoient des mails à des personnes aléatoires pour leur
+              donner de l'argent.
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Je n'ai jamais de chance pour ces
+              trucs-là, ça ne m'arrivera jamais.
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Présentateur</span>Pensez à consulter vos
+              mails, vous pourriez finir millionnaires avant ce soir !
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Voilà, je n'ai rien, je le
+              savais.
+            </div>
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Quelqu'un sonne à la porte.
+            </div>
+            <p class="narr-text">Souhaitez-vous ouvrir la porte ?</p>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-livreur')">
+                Ouvrir la porte
+              </button>
+              <button class="choice-btn" onclick="go('p-couloir-attente')">
+                Ignorer et partir au travail
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCÈNE 4 — Livreur -->
+      <div class="passage" id="p-livreur">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/porte.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 4 · Le livreur</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+              <img
+                class="vn-char right"
+                src="img/livreur.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line">
+              <span class="speaker">Livreur</span>Bonjour, j'ai un colis pour
+              vous !
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Bonjour… Je ne me rappelle pas
+              avoir commandé quelque chose.
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Livreur</span>Des fois des entreprises
+              offrent des cadeaux à leurs clients fidèles pour conserver leur
+              fidélité.
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Livreur</span>Vous pouvez me donner votre
+              carte d'identité pour l'identification, ainsi que votre signature
+              pour confirmer la réception ?
+            </div>
+            <p class="narr-text">Que faites-vous ?</p>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-fin-vol-identite')">
+                Donner ses documents et signer
+              </button>
+              <button class="choice-btn" onclick="go('p-livreur-refus')">
+                Refuser prudemment
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Refus livreur -->
+      <div class="passage" id="p-livreur-refus">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/porte.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 4.1 · Bon réflexe</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+              <img
+                class="vn-char right dim"
+                src="img/livreur.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Désolé, je préfère vérifier avec
+              l'entreprise avant.
+            </div>
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Le livreur devient nerveux
+              et part rapidement.
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>C'était vraiment louche.
+            </div>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-bureau')">
+                Partir au travail
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Couloir attente -->
+      <div class="passage" id="p-couloir-attente">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/porte.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène · Couloir</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Vous attendez un moment,
+              puis vous partez au travail.
+            </div>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-bureau')">
+                Partir au travail
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+       SCÈNE 5 — DÉMARCHEUR
+  ══════════════════════════════════════════ -->
+      <div class="passage" id="p-porte-demarcheur">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/rue_démarcheur.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 5 · Le démarcheur</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+              <img
+                class="vn-char right"
+                src="img/démarcheur.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Quelqu'un sonne à la porte.
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Démarcheur</span>Bonjour, je représente une
+              nouvelle plateforme d'investissement !
+            </div>
+            <p class="narr-text">
+              Acceptez-vous d'écouter l'offre du démarcheur ?
+            </p>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-crypto-offre')">
+                Écouter l'offre
+              </button>
+              <button class="choice-btn" onclick="go('p-bureau')">
+                Refuser et partir au travail
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scène 5.1 — Offre crypto -->
+      <div class="passage" id="p-crypto-offre">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/rue_démarcheur.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 5.1 · Cryptomonnaie</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left dim"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+              <img
+                class="vn-char right"
+                src="img/démarcheur.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line">
+              <span class="speaker">Démarcheur</span>Avec notre plateforme de
+              cryptomonnaie vous pouvez doubler votre argent très rapidement !
+            </div>
+            <p class="narr-text">L'offre vous intéresse-t-elle ?</p>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-fin-crypto')">
+                Investir
+              </button>
+              <button class="choice-btn" onclick="go('p-crypto-refus')">
+                Refuser
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Refus crypto -->
+      <div class="passage" id="p-crypto-refus">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/rue_démarcheur.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 5.1 · Bon réflexe</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+              <img
+                class="vn-char right dim"
+                src="img/démarcheur.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Désolé, mais ça a l'air trop beau
+              pour être vrai.
+            </div>
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Le démarcheur repart,
+              visiblement déçu.
+            </div>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-bureau')">
+                Partir au travail
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+       SCÈNE 6 — BUREAU
+  ══════════════════════════════════════════ -->
+      <div class="passage" id="p-bureau">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/scène_bureau.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 6 · Bureau</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left dim"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+              <img
+                class="vn-char right"
+                src="img/patronne.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line">
+              <span class="speaker">Patron·ne</span>Bienvenue. Au travail !
+            </div>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-patron-mail')">
+                Prendre ses affaires
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scène 7 — Patron rappelle les mails -->
+      <div class="passage" id="p-patron-mail">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/scène_bureau.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 7 · Rappel du patron</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+              <img
+                class="vn-char right"
+                src="img/patronne.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line">
+              <span class="speaker">Patron·ne</span>N'oublie pas de vérifier tes
+              mails aujourd'hui !
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Oui, oui…
+            </div>
+            <p class="narr-text">Vous commencez à avoir envie d'un café.</p>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-cafe-solo')">
+                Café seul·e
+              </button>
+              <button class="choice-btn" onclick="go('p-cafe-collegue')">
+                Café avec un·e collègue
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scène 10 — Café solo -->
+      <div class="passage" id="p-cafe-solo">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/cafe_solo.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 10 · Pause seul·e</div>
+            <div class="vn-chars">
+              <img class="vn-char left" onerror="this.style.display = 'none'" />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Cette journée est interminable…
+            </div>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-reprendre')">
+                Reprendre le travail
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scène 12 — Café collègue -->
+      <div class="passage" id="p-cafe-collegue">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/cafe_duo.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 12 · Pause avec collègue</div>
+            <div class="vn-chars">
+              <img class="vn-char left" onerror="this.style.display = 'none'" />
+              <img
+                class="vn-char right"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Salut, ça va aujourd'hui ? La
+              journée est longue, non ?
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Collègue</span>Oui, t'as raison, comme tous
+              les jours.
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>À chaque fois que je vois la boss
+              j'ai envie de démissionner… mais je dois payer les factures de
+              l'hôpital.
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Collègue</span>Ah oui, comment elle va ta
+              mère ?
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Elle va de plus en plus mal et
+              les factures ne font que s'accumuler.
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Collègue</span>Et avec ce salaire ça risque
+              pas de s'arranger. Mais j'ai un site qui peut te trouver un
+              travail pas très dur et bien payé.
+            </div>
+            <p class="narr-text">
+              Acceptez-vous le lien proposé par votre collègue ?
+            </p>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-fin-virus-collegue')">
+                Accepter le lien
+              </button>
+              <button class="choice-btn" onclick="go('p-collegue-refus')">
+                Décliner prudemment
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Refus collègue -->
+      <div class="passage" id="p-collegue-refus">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/cafe_duo.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 12 · Bon réflexe</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Merci, mais je préfère vérifier
+              avant.
+            </div>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-reprendre')">
+                Reprendre le travail
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scène 14-15 — Reprendre -->
+      <div class="passage" id="p-reprendre">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/scène_bureau.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 14–15 · Retour au bureau</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Bon, je reprends le travail.
+            </div>
+            <p class="narr-text">Voulez-vous lire vos mails ?</p>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-mails')">
+                Lire les mails
+              </button>
+              <button class="choice-btn" onclick="go('p-fin-licenciement')">
+                Ignorer les mails
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scène 16 — Lecture des mails -->
+      <div class="passage" id="p-mails">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/mail.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 16 · Boîte mail</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>C'est quoi tous ces mails… j'en
+              peux déjà plus.
+            </div>
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Yuki voit un mail important,
+              apparemment du patron. Une pièce jointe s'y trouve.
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Encore un mail du patron… Mais
+              cette adresse mail est bizarre…
+            </div>
+            <p class="narr-text">Cliquez-vous sur la pièce jointe ?</p>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-fin-virus-mail')">
+                Ouvrir la pièce jointe
+              </button>
+              <button class="choice-btn" onclick="go('p-phishing')">
+                Examiner le mail avant d'ouvrir
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phishing détecté -->
+      <div class="passage" id="p-phishing">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/mail.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 16 · Phishing détecté</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+              <img
+                class="vn-char right"
+                src="img/patronne.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Attends… c'est quoi cette adresse
+              mail bizarre ?
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Collègue</span>Ça ne peut pas être le
+              patron, il ne sait pas écrire aussi bien, ce demeuré.
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>C'est sûrement du phishing !
+            </div>
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Vous signalez le mail et
+              rentrez chez vous.
+            </div>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-mail-loterie')">
+                Rentrer à la maison
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scène 21 — Mail loterie -->
+      <div class="passage" id="p-mail-loterie">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/tel_notif.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Scène 21 · Soirée — Un mail arrive</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Vous êtes rentré·e chez
+              vous. Vous recevez un mail.
+            </div>
+            <div class="vn-line warn">
+              <span class="speaker">Mail reçu</span>🎉 Félicitations ! Vous avez
+              gagné 500 000€ à la loterie nationale. Cliquez sur le lien
+              ci-dessous pour récupérer votre prix.
+            </div>
+            <p class="narr-text">Souhaitez-vous cliquer sur le lien ?</p>
+            <div class="choices">
+              <button class="choice-btn" onclick="go('p-fin-scam-loterie')">
+                Cliquer sur le lien
+              </button>
+              <button class="choice-btn" onclick="go('p-bonne-fin')">
+                Ignorer — c'est une arnaque
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+       FINS MAUVAISES
+  ══════════════════════════════════════════ -->
+
+      <!-- FIN 1 — Vol d'identité -->
+      <div class="passage" id="p-fin-vol-identite">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/porte.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Fin Mauvaise 1</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left dim"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+              <img
+                class="vn-char right"
+                src="img/policier.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Quelques jours plus tard…
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Banque</span>Monsieur, nous vous appelons
+              pour confirmer plusieurs crédits ouverts à votre nom.
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Pardon ? Quels crédits ?
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Banque</span>Vous avez signé plusieurs
+              contrats.
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>QUOI ?!
+            </div>
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Yuki réalise que c'était un
+              faux livreur.
+            </div>
+            <div class="ending-box bad">
+              <div class="ending-badge">Fin Mauvaise 1</div>
+              <h2>💀 Vol d'identité</h2>
+              <p class="narr-text">
+                Vous avez communiqué vos données personnelles à un escroc.
+                Vérifiez toujours l'identité d'un livreur avant de signer quoi
+                que ce soit.
+              </p>
+            </div>
+            <div class="choices" style="justify-content: center">
+              <button class="restart-btn" onclick="restart()">
+                ↩ Recommencer
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FIN 2 — Arnaque crypto -->
+      <div class="passage" id="p-fin-crypto">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/rue_démarcheur.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Fin Mauvaise 2</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left dim"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Quelques semaines plus tard…
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Attends… le site ne fonctionne
+              plus. Où est passé mon argent ?
+            </div>
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Le téléphone sonne.
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Hôpital</span>Madame, nous vous appelons
+              concernant les factures pour votre mère.
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Je… je n'ai plus l'argent.
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Médecin</span>Nous sommes désolés, mais nous
+              n'avons pas pu continuer les soins.
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Non… maman…
+            </div>
+            <div class="ending-box bad">
+              <div class="ending-badge">Fin Mauvaise 2</div>
+              <h2>💀 Arnaque à la crypto</h2>
+              <p class="narr-text">
+                Les promesses de gains rapides sont presque toujours des
+                arnaques. Ne jamais investir dans une plateforme inconnue
+                proposée à la porte.
+              </p>
+            </div>
+            <div class="choices" style="justify-content: center">
+              <button class="restart-btn" onclick="restart()">
+                ↩ Recommencer
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FIN 3 — Virus (collègue) -->
+      <div class="passage" id="p-fin-virus-collegue">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/tel_bug.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Fin Mauvaise 3</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left dim"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>OUAAAHH, il se passe quoi avec
+              mon téléphone ?! Non, c'est pas vrai, c'est un nouveau téléphone !
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>C'est vraiment une journée de
+              merde.
+            </div>
+            <div class="ending-box bad">
+              <div class="ending-badge">Fin Mauvaise 3</div>
+              <h2>💀 Virus / Malware</h2>
+              <p class="narr-text">
+                Un lien reçu d'une source non vérifiée peut infecter votre
+                appareil. Même un collègue bien intentionné peut partager un
+                lien dangereux sans le savoir.
+              </p>
+            </div>
+            <div class="choices" style="justify-content: center">
+              <button class="restart-btn" onclick="restart()">
+                ↩ Recommencer
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FIN 4 — Virus mail -->
+      <div class="passage" id="p-fin-virus-mail">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/popup.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Fin Mauvaise 4</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left dim"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+              <img
+                class="vn-char right"
+                src="img/patronne.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Un pop-up apparaît sur
+              l'écran. 10 minutes plus tard, l'ordinateur plante.
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>NON, c'est pas vrai, je suis
+              mort·e !
+            </div>
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Le patron arrive en colère
+              et vous renvoie sur le champ.
+            </div>
+            <div class="ending-box bad">
+              <div class="ending-badge">Fin Mauvaise 4</div>
+              <h2>💀 Virus informatique</h2>
+              <p class="narr-text">
+                Ne jamais ouvrir une pièce jointe sans vérifier l'adresse mail
+                de l'expéditeur. Le phishing cible souvent les salariés via de
+                faux mails de leur hiérarchie.
+              </p>
+            </div>
+            <div class="choices" style="justify-content: center">
+              <button class="restart-btn" onclick="restart()">
+                ↩ Recommencer
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FIN 5 — Licenciement -->
+      <div class="passage" id="p-fin-licenciement">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/scène_bureau.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Fin Mauvaise 5</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left dim"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+              <img
+                class="vn-char right"
+                src="img/patronne.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Vous passez plusieurs heures
+              à survoler votre travail sans lire vos mails. Le boss arrive,
+              énervé.
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Patron·ne</span>Tu n'as même pas lu tes
+              mails ?!
+            </div>
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Il vous renvoie
+              immédiatement.
+            </div>
+            <div class="ending-box bad">
+              <div class="ending-badge">Fin Mauvaise 5</div>
+              <h2>💀 Licenciement</h2>
+              <p class="narr-text">
+                Ignorer ses responsabilités professionnelles a des conséquences.
+                Restez attentif·ve aux communications importantes au travail.
+              </p>
+            </div>
+            <div class="choices" style="justify-content: center">
+              <button class="restart-btn" onclick="restart()">
+                ↩ Recommencer
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FIN 6 — Scam loterie -->
+      <div class="passage" id="p-fin-scam-loterie">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/tel_notif.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Fin Mauvaise 6</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left dim"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Le site demande vos
+              coordonnées bancaires. Quelques jours plus tard…
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Banque</span>Madame, votre compte a été
+              vidé.
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>C'était une arnaque…
+            </div>
+            <div class="ending-box bad">
+              <div class="ending-badge">Fin Mauvaise 6</div>
+              <h2>💀 Scam loterie</h2>
+              <p class="narr-text">
+                Personne ne gagne à la loterie sans avoir joué. Ne jamais
+                cliquer sur des liens promettant des gains d'argent non
+                sollicités.
+              </p>
+            </div>
+            <div class="choices" style="justify-content: center">
+              <button class="restart-btn" onclick="restart()">
+                ↩ Recommencer
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+       BONNE FIN
+  ══════════════════════════════════════════ -->
+      <div class="passage" id="p-bonne-fin">
+        <div class="vn-card">
+          <div class="vn-stage">
+            <img
+              class="vn-bg"
+              src="img/scène_bureau.png"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="vn-scene-label">Bonne Fin ✓</div>
+            <div class="vn-chars">
+              <img
+                class="vn-char left"
+                src="img/perso_principale.png"
+                onerror="this.style.display = 'none'"
+              />
+              <img
+                class="vn-char right"
+                src="img/patronne.png"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+          <div class="vn-box">
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Encore une arnaque. Décidément…
+            </div>
+            <div class="vn-line narr">
+              <span class="speaker">Narration</span>Le lendemain, au travail.
+            </div>
+            <div class="vn-line">
+              <span class="speaker">Patron·ne</span>Grâce à toi, on a évité
+              plusieurs arnaques dans l'entreprise. Tu es promu·e responsable
+              sécurité informatique !
+            </div>
+            <div class="vn-line mc">
+              <span class="speaker">Yuki</span>Enfin une bonne journée.
+            </div>
+            <div class="ending-box good">
+              <div class="ending-badge">Bonne Fin ✓</div>
+              <h2>🌟 Responsable Sécurité</h2>
+              <p class="narr-text" style="color: var(--good)">
+                Vous avez évité toutes les arnaques et fait preuve d'un
+                excellent sens critique. Continuez à protéger vos données et
+                celles de votre entourage !
+              </p>
+            </div>
+            <div class="choices" style="justify-content: center">
+              <button class="restart-btn" onclick="restart()">↩ Rejouer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- #game -->
+
+    <!-- BOOK BUTTON -->
+    <button id="book-btn" onclick="openGuide()" title="Guide de sécurité">
+      📖
+      <span class="book-count" id="book-count">0/7</span>
+    </button>
+
+    <!-- GUIDE MODAL -->
+    <div id="guide-overlay" onclick="closeGuideIfOutside(event)">
+      <div id="guide-modal">
+        <div id="guide-header">
+          <div>
+            <h2>📖 Guide de Sécurité</h2>
+            <div class="guide-sub">
+              Fins et arnaques découvertes au fil de l'histoire
+            </div>
+          </div>
+          <button id="guide-close" onclick="closeGuide()">✕ Fermer</button>
+        </div>
+        <div id="guide-body">
+          <div id="guide-list"></div>
+          <div id="guide-detail"></div>
+        </div>
+      </div>
     </div>
 
-    <div class="mohamedBoukhatem">
-        <table>
-            <tr>
-                <th>
-                    <h2>
-                        Mohamed Boukhatem
-                    </h2>
+    <script>
+      // ── ENDINGS REGISTRY ──
+      const ENDINGS = [
+        {
+          id: "p-fin-vol-identite",
+          label: "Fin Mauvaise 1",
+          icon: "💀",
+          type: "bad",
+          title: "Vol d'identité",
+          scamName: "Faux colis du livreur",
+          suspects: [
+            "Aucun souvenir d'avoir commandé quoi que ce soit",
+            "Explication vague ('cadeau pour client fidèle')",
+            "Demande immédiate de votre carte d'identité",
+            "Pression pour donner des infos sur le pas de la porte",
+          ],
+          reflexes: [
+            "Ne jamais donner votre carte d'identité à un inconnu",
+            "Ne pas signer sans preuve claire de commande",
+            "Demander le nom de l'entreprise et un justificatif",
+            "Vérifier auprès du transporteur ou du site marchand",
+            "Refuser le colis si rien n'a été commandé",
+          ],
+        },
+        {
+          id: "p-fin-crypto",
+          label: "Fin Mauvaise 2",
+          icon: "💀",
+          type: "bad",
+          title: "Arnaque à la crypto",
+          scamName: "Démarcheur frauduleux",
+          suspects: [
+            "Contact non sollicité à votre domicile",
+            "Discours commercial vague et trop beau pour être vrai",
+            "Promesses de gains rapides et garantis",
+            "Insistance et pression pour décider vite",
+            "Tentative d'exploiter une situation difficile",
+          ],
+          reflexes: [
+            "Refuser poliment mais fermement tout démarcheur",
+            "Ne rien signer immédiatement sur le pas de la porte",
+            "Ne jamais donner vos données bancaires à un inconnu",
+            "Demander une documentation écrite officielle",
+            "Comparer tranquillement avec d'autres offres légales",
+          ],
+        },
+        {
+          id: "p-fin-virus-collegue",
+          label: "Fin Mauvaise 3",
+          icon: "💀",
+          type: "bad",
+          title: "Virus / Malware",
+          scamName: "Faux site d'emploi",
+          suspects: [
+            "Promesse d'un travail 'pas difficile et bien payé'",
+            "Lien reçu d'une source non officielle",
+            "Pas de nom d'entreprise clairement identifiable",
+            "Aucune procédure de recrutement normale",
+            "Comportement technique anormal après la visite du site",
+          ],
+          reflexes: [
+            "Ne pas cliquer sur un lien sans vérification préalable",
+            "Chercher des avis sur l'URL exacte proposée",
+            "Vérifier l'existence réelle de l'entreprise en ligne",
+            "Ne pas installer d'applications sans contrôle",
+            "Utiliser un antivirus/antimalware à jour régulièrement",
+          ],
+        },
+        {
+          id: "p-fin-virus-mail",
+          label: "Fin Mauvaise 4",
+          icon: "💀",
+          type: "bad",
+          title: "Virus informatique",
+          scamName: "Phishing – Mail patron",
+          suspects: [
+            "Adresse mail de l'expéditeur anormale ou légèrement modifiée",
+            "Ton ou style inhabituel pour la personne censée écrire",
+            "Présence d'une pièce jointe ou d'un lien risqué",
+            "Volonté de faire agir rapidement ('urgent', 'important')",
+            "Demande inhabituelle d'informations confidentielles",
+          ],
+          reflexes: [
+            "Toujours vérifier l'adresse exacte de l'expéditeur",
+            "Comparer avec de vrais mails reçus précédemment",
+            "Demander confirmation par un autre canal de communication",
+            "Ne pas cliquer immédiatement sur une pièce jointe douteuse",
+            "Signaler le mail suspect au service informatique",
+          ],
+        },
+        {
+          id: "p-fin-licenciement",
+          label: "Fin Mauvaise 5",
+          icon: "💀",
+          type: "bad",
+          title: "Licenciement",
+          scamName: "Ignorer ses responsabilités",
+          suspects: [
+            "Tendance à procrastiner sur les tâches importantes",
+            "Négliger de lire ses communications professionnelles",
+            "Croire qu'une tâche peut attendre indéfiniment",
+            "Mauvaise gestion de son temps au travail",
+          ],
+          reflexes: [
+            "Lire ses mails professionnels régulièrement dans la journée",
+            "Prioriser les communications de sa hiérarchie",
+            "Rester attentif·ve aux instructions reçues",
+            "Organiser ses tâches pour ne rien oublier d'important",
+          ],
+        },
+        {
+          id: "p-fin-scam-loterie",
+          label: "Fin Mauvaise 6",
+          icon: "💀",
+          type: "bad",
+          title: "Scam loterie",
+          scamName: "Fausse loterie / Gain non sollicité",
+          suspects: [
+            "Gagner une loterie à laquelle vous n'avez pas participé",
+            "Demande de coordonnées bancaires pour 'recevoir' un gain",
+            "Lien dans un mail non sollicité promettant de l'argent",
+            "Urgence ou délai imposé pour réclamer le prix",
+            "Fautes d'orthographe ou mise en page douteuse",
+          ],
+          reflexes: [
+            "Personne ne gagne une loterie sans y avoir participé",
+            "Ne jamais cliquer sur un lien promettant de l'argent",
+            "Ne pas communiquer vos coordonnées bancaires par mail",
+            "Signaler ce type de mail comme phishing / spam",
+            "En cas de doute, contacter directement l'organisme officiel",
+          ],
+        },
+        {
+          id: "p-bonne-fin",
+          label: "Bonne Fin ✓",
+          icon: "🌟",
+          type: "good",
+          title: "Responsable Sécurité",
+          scamName: "Toutes les arnaques évitées !",
+          suspects: [
+            "Vous avez su détecter chaque tentative d'arnaque",
+            "Vous avez gardé votre esprit critique tout au long de la journée",
+            "Aucune information sensible n'a été compromise",
+          ],
+          reflexes: [
+            "Continuer à vérifier l'identité de toute personne inconnue",
+            "Ne jamais partager de données personnelles sans vérification",
+            "Toujours examiner l'adresse d'un expéditeur avant d'agir",
+            "Sensibiliser votre entourage aux arnaques courantes",
+            "Rester vigilant·e — les arnaques évoluent constamment !",
+          ],
+        },
+      ];
 
-                    <img src="mohamed.png" alt="Broked" , width="300">
-                </th>
-                <th>
-                    <p>Mohamed est notre programmeur le plus agéri rien ne lui échape. Il est d'une grande aide dans la
-                        sécurité des données de la PointeurCorp, Il se fera une joie de repoousser les hacker grâce à sa
-                        technique des variables et fonctions pas clair. Il repousse l'envahisseur ce diable promouvant
-                        l'open source. On raconte même qu'un free n'est qu'une option parmie d'autre.</p>
-                </th>
-            </tr>
-        </table>
-    </div>
+      // ── STATE ──
+      let unlockedIds = new Set(
+        JSON.parse(localStorage.getItem("reoone_unlocked") || "[]"),
+      );
+      let selectedGuideId = null;
 
-    <div class="alixNeuveux">
-        <table>
-            <tr>
-                <th>
-                    <h2>
-                        Alix Neuveux
-                    </h2>
+      function saveUnlocked() {
+        localStorage.setItem(
+          "reoone_unlocked",
+          JSON.stringify([...unlockedIds]),
+        );
+      }
 
-                    <img src="alix.png" alt="Broked" , width="300">
-                </th>
-                <th>
-                    <p>
-                        Nous avons été fière d'acceuille ce chère alix cette pauvre bête affamé a été retrouvée le long
-                        de la route de l'analyse. Il est doté de capacité exceptionnel mais n'a pas pu en profiter
-                        longtemps car son méchant ancien employeur s'est débarassé de lui, heureusement nous croyons à
-                        la réinssertion. Lui crois surtout en un dieu omniscient.
-                    </p>
-                </th>
-            </tr>
-        </table>
+      function updateBookCount() {
+        const total = ENDINGS.length;
+        const count = unlockedIds.size;
+        document.getElementById("book-count").textContent = count + "/" + total;
+      }
 
-    </div>
-    <div class="Missing data">
-        <table>
-            <tr>
-                <th>
-                    <h2>Missing Data</h2>
+      // ── NAVIGATION ──
+      function go(id) {
+        document
+          .querySelectorAll(".passage")
+          .forEach((p) => p.classList.remove("active"));
+        const target = document.getElementById(id);
+        if (target) {
+          target.classList.add("active");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+        // Unlock ending if applicable
+        const isEnding = ENDINGS.some((e) => e.id === id);
+        if (isEnding && !unlockedIds.has(id)) {
+          unlockedIds.add(id);
+          saveUnlocked();
+          updateBookCount();
+          flashBookBtn();
+        }
+      }
 
-                    <img src="missingdata.png" , alt="Broked" , height="300">
-                </th>
-                <th>
-                    <p>Un véritable traitre certains dirons porté disparu. Mais ici nous savons tout</p>
-                </th>
-            </tr>
-        </table>
-    </div>
+      function flashBookBtn() {
+        const btn = document.getElementById("book-btn");
+        btn.style.boxShadow = "0 0 0 6px #f9731666, 0 0 36px #f9731644";
+        btn.style.borderColor = "var(--accent2)";
+        btn.style.color = "var(--accent2)";
+        setTimeout(() => {
+          btn.style.boxShadow = "";
+          btn.style.borderColor = "";
+          btn.style.color = "";
+        }, 1400);
+      }
 
-    <div class="Sacha Ismailov">
-        <table>
-            <tr>
-                <th>
-                    <h2>Sacha Ismailov</h2>
+      function restart() {
+        go("p-accueil");
+      }
 
-                    <img src="sacha.png" alt="Broked" , width="300">
-                </th>
-                <th>
-                    <p>Le gentil patron, le débogueur en chef, le grand, le sublime l'incroyable. Que dire de plus il
-                        est merveilleu ses interventions sont presque divinnes. Il aide à la compréhension et à la
-                        vulgarisation #boucleOnInself. Le présenter en long et en large ne ferait qu'augmenter
-                        artificiellement la taille de cette page</p>
-                </th>
-            </tr>
-        </table>
-    </div>
+      // ── GUIDE MODAL ──
+      function openGuide() {
+        renderGuideList();
+        document.getElementById("guide-overlay").classList.add("open");
+      }
 
+      function closeGuide() {
+        document.getElementById("guide-overlay").classList.remove("open");
+      }
 
-    <h1>Nos sponsors</h1>
-    <a href="/blabla.html">
-        <img src="https://i.pinimg.com/736x/a7/5d/55/a75d552ca60dc99682ba8a121513ef79.jpg" alt="" width="300">
-    </a>
+      function closeGuideIfOutside(e) {
+        if (e.target === document.getElementById("guide-overlay")) closeGuide();
+      }
 
-</body>
+      function renderGuideList() {
+        const list = document.getElementById("guide-list");
+        list.innerHTML = "";
+        ENDINGS.forEach((e) => {
+          const unlocked = unlockedIds.has(e.id);
+          const isActive = selectedGuideId === e.id;
+          const div = document.createElement("div");
+          div.className =
+            "guide-item" +
+            (unlocked
+              ? e.type === "bad"
+                ? " bad-end"
+                : " good-end"
+              : " locked") +
+            (isActive ? " active" : "");
+          div.innerHTML = `<span class="gi-icon">${unlocked ? e.icon : "🔒"}</span>
+                    <div class="gi-label">${unlocked ? e.label + "<br><small>" + e.title + "</small>" : e.label}</div>`;
+          if (unlocked) {
+            div.onclick = () => selectGuideEntry(e.id);
+          }
+          list.appendChild(div);
+        });
+        renderGuideDetail();
+      }
 
+      function selectGuideEntry(id) {
+        selectedGuideId = id;
+        renderGuideList();
+      }
 
+      function renderGuideDetail() {
+        const detail = document.getElementById("guide-detail");
+        if (!selectedGuideId) {
+          const unlocked = [...unlockedIds].length;
+          detail.innerHTML = `<p class="gd-locked-msg" style="margin-top:60px">
+                    ${
+                      unlocked === 0
+                        ? "Jouez pour débloquer vos premières fins et découvrir les arnaques rencontrées."
+                        : "← Sélectionnez une fin débloquée pour voir les détails de l'arnaque."
+                    }
+                </p>`;
+          return;
+        }
+        const e = ENDINGS.find((x) => x.id === selectedGuideId);
+        if (!e || !unlockedIds.has(e.id)) {
+          detail.innerHTML = "";
+          return;
+        }
+
+        const suspectsHtml = e.suspects.map((s) => `<li>${s}</li>`).join("");
+        const reflexesHtml = e.reflexes.map((r) => `<li>${r}</li>`).join("");
+        const sectionLabel =
+          e.type === "good" ? "Ce que vous avez bien fait" : "Bons réflexes";
+
+        detail.innerHTML = `
+                <div class="gd-title ${e.type}">${e.icon} ${e.title}</div>
+                <div class="gd-badge ${e.type}">${e.label}</div>
+                <div style="font-size:0.95rem;color:var(--accent);font-weight:600;margin-bottom:16px">${e.scamName}</div>
+                ${
+                  e.type === "bad"
+                    ? `
+                <div class="gd-section">
+                    <div class="gd-section-title">⚠ Signes suspects</div>
+                    <ul class="gd-list">${suspectsHtml}</ul>
+                </div>`
+                    : ""
+                }
+                <div class="gd-section">
+                    <div class="gd-section-title">✓ ${sectionLabel}</div>
+                    <ul class="gd-list ${e.type === "good" ? "good-list" : ""}">${reflexesHtml}</ul>
+                </div>
+            `;
+      }
+
+      // ── INIT ──
+      updateBookCount();
+      if (unlockedIds.size > 0) {
+        selectedGuideId = [...unlockedIds][unlockedIds.size - 1];
+      }
+    </script>
+  </body>
 </html>

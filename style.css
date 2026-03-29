@@ -1,0 +1,61 @@
+body {
+  background-color: rgb(31, 31, 90);
+  color: rgb(130, 98, 236);
+}
+
+h1 {
+  font-family: monospace;
+  padding-top: 20px;
+  font-size: 200%;
+}
+h1::first-letter {
+  font-size: 140%;
+}
+
+a {
+  font-size: 2.5ch;
+}
+
+.topbar {
+  position: fixed;
+  margin-left: 50%;
+  background-color: rgb(130, 98, 236);
+  border-radius: 45px;
+  border: 4px;
+  border-color: rgb(130, 98, 236);
+  border-style: solid;
+}
+.center {
+  position: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.topbar {
+  display: flex;
+  justify-content: center;
+  box-shadow: 0px 0px 8px;
+}
+
+button.theme:hover {
+  box-shadow: 0px 0px 2px 2px;
+}
+
+button.theme {
+  text-align: center;
+  background-color: rgb(148, 130, 210);
+  min-height: 10px;
+  min-width: 10px;
+  border-radius: 9px;
+  border-width: 4px;
+  border-style: hidden;
+  /*box shadow color = button color (fg color)*/
+  box-shadow: 0px 0px 5px 6px;
+  color: rgb(8, 234, 242);
+  font-family: monospace;
+  transition: box-shadow 0.3s ease;
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
