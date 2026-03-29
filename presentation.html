@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pointeur Corp</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080b10;
+      --surface: #0d1117;
+      --border: #1e2d40;
+      --accent: #00ffe0;
+      --accent2: #ff3864;
+      --accent3: #f5c518;
+      --text: #c9d1d9;
+      --text-dim: #586069;
+      --white: #f0f6fc;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom cursor */
+    .cursor {
+      position: fixed;
+      width: 12px; height: 12px;
+      background: var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      mix-blend-mode: difference;
+      transition: transform 0.15s ease;
+    }
+    .cursor-ring {
+      position: fixed;
+      width: 36px; height: 36px;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transition: all 0.3s cubic-bezier(.17,.67,.35,1.2);
+      opacity: 0.5;
+    }
+
+    /* Noise overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.025;
+      pointer-events: none;
+      z-index: 9997;
+    }
+
+    /* Grid lines background */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,255,224,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,224,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 3rem;
+      background: rgba(8,11,16,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.6rem;
+      letter-spacing: 0.08em;
+      color: var(--white);
+    }
+    .nav-logo span { color: var(--accent); }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 2rem;
+    }
+    nav ul a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    nav ul a:hover { color: var(--accent); }
+
+    .nav-badge {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 0.3rem 0.8rem;
+      text-transform: uppercase;
+    }
+
+    /* HERO */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8rem 3rem 4rem;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .hero-glitch {
+      position: relative;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(5rem, 14vw, 13rem);
+      line-height: 0.9;
+      text-align: center;
+      color: var(--white);
+      letter-spacing: -0.02em;
+      animation: fadeUp 1s ease both;
+    }
+    .hero-glitch::before,
+    .hero-glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+    }
+    .hero-glitch::before {
+      color: var(--accent2);
+      clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+      transform: translateX(-3px);
+      animation: glitch1 4s infinite step-start;
+    }
+    .hero-glitch::after {
+      color: var(--accent);
+      clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+      transform: translateX(3px);
+      animation: glitch2 4s infinite step-start;
+    }
+
+    @keyframes glitch1 {
+      0%, 94%, 100% { transform: translateX(0); opacity: 0; }
+      95% { transform: translateX(-4px); opacity: 1; }
+      97% { transform: translateX(4px); opacity: 1; }
+    }
+    @keyframes glitch2 {
+      0%, 96%, 100% { transform: translateX(0); opacity: 0; }
+      97% { transform: translateX(3px); opacity: 1; }
+      99% { transform: translateX(-3px); opacity: 1; }
+    }
+
+    .hero-sub {
+      margin-top: 1.5rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      animation: fadeUp 1s 0.2s ease both;
+    }
+
+    .hero-desc {
+      max-width: 620px;
+      text-align: center;
+      margin-top: 2.5rem;
+      font-size: 0.9rem;
+      line-height: 1.8;
+      color: var(--text-dim);
+      animation: fadeUp 1s 0.4s ease both;
+    }
+
+    .hero-cta {
+      margin-top: 3rem;
+      display: flex;
+      gap: 1rem;
+      animation: fadeUp 1s 0.6s ease both;
+    }
+
+    .btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 0.9rem 2rem;
+      border: 1px solid transparent;
+      cursor: none;
+      transition: all 0.25s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+    .btn-primary:hover { background: transparent; color: var(--accent); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Scan line */
+    .scanline {
+      position: absolute;
+      left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.15;
+      animation: scan 6s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes scan {
+      0% { top: 0%; }
+      100% { top: 100%; }
+    }
+
+    /* Orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      animation: float 8s ease-in-out infinite;
+    }
+    .orb1 { width: 400px; height: 400px; background: rgba(0,255,224,0.06); top: -100px; left: -100px; }
+    .orb2 { width: 300px; height: 300px; background: rgba(255,56,100,0.06); bottom: -50px; right: -50px; animation-delay: -4s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-30px) scale(1.05); }
+    }
+
+    /* SECTIONS */
+    section {
+      position: relative;
+      z-index: 1;
+      padding: 7rem 3rem;
+    }
+
+    .section-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.8rem;
+    }
+    .section-label::before { content: '// '; }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      color: var(--white);
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+
+    .section-rule {
+      width: 60px;
+      height: 2px;
+      background: var(--accent);
+      margin-bottom: 3rem;
+    }
+
+    /* ABOUT */
+    #about .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .about-text {
+      font-size: 0.95rem;
+      line-height: 1.9;
+      color: var(--text);
+    }
+
+    .about-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .stat-card {
+      border: 1px solid var(--border);
+      padding: 2rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(0,255,224,0.04), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .stat-card:hover { border-color: var(--accent); }
+    .stat-card:hover::before { opacity: 1; }
+
+    .stat-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3.5rem;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-top: 0.5rem;
+    }
+
+    /* TEAM */
+    #team {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    #team .inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5px;
+      border: 1px solid var(--border);
+    }
+
+    .member-card {
+      background: var(--bg);
+      padding: 2.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s;
+    }
+
+    .member-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s cubic-bezier(.17,.67,.35,1.2);
+    }
+    .member-card:hover { background: #0d1117; }
+    .member-card:hover::after { transform: scaleX(1); }
+    .member-card.danger::after { background: var(--accent2); }
+    .member-card.gold::after { background: var(--accent3); }
+
+    .avatar {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .avatar img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      position: absolute;
+      inset: 0;
+    }
+
+    .member-index {
+      position: absolute;
+      top: 2rem; right: 2rem;
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+    }
+
+    .member-role {
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+    .member-card.danger .member-role { color: var(--accent2); }
+    .member-card.gold .member-role { color: var(--accent3); }
+
+    .member-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      letter-spacing: 0.04em;
+      color: var(--white);
+      margin-bottom: 1rem;
+    }
+
+    .member-bio {
+      font-size: 0.8rem;
+      line-height: 1.7;
+      color: var(--text-dim);
+    }
+
+    .member-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 1.5rem;
+    }
+
+    .tag {
+      font-size: 0.58rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.6rem;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+    .member-card:hover .tag { border-color: rgba(0,255,224,0.2); }
+    .member-card.danger:hover .tag { border-color: rgba(255,56,100,0.2); }
+    .member-card.gold:hover .tag { border-color: rgba(245,197,24,0.2); }
+
+    /* SPONSORS */
+    #sponsors { text-align: center; }
+    #sponsors .inner { max-width: 900px; margin: 0 auto; }
+
+    .sponsor-ticker {
+      overflow: hidden;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 0;
+      margin: 3rem 0;
+    }
+    .ticker-track {
+      display: flex;
+      gap: 4rem;
+      animation: ticker 20s linear infinite;
+      white-space: nowrap;
+    }
+    .ticker-item {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+    .ticker-item span { color: var(--accent); }
+    @keyframes ticker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .sponsor-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .sponsor-cell {
+      background: var(--bg);
+      padding: 3rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s;
+    }
+    .sponsor-cell:hover { background: var(--surface); }
+    .sponsor-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.4rem;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      transition: color 0.3s;
+    }
+    .sponsor-cell:hover .sponsor-logo { color: var(--accent); }
+    .sponsor-img-cell img {
+      width: 100%;
+      max-width: 220px;
+      height: 120px;
+      object-fit: cover;
+      opacity: 0.6;
+      filter: grayscale(100%);
+      transition: all 0.4s;
+    }
+    .sponsor-img-cell:hover img { opacity: 1; filter: grayscale(0%); }
+
+    /* FOOTER */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      color: var(--white);
+      letter-spacing: 0.05em;
+    }
+    .footer-logo span { color: var(--accent); }
+
+    .footer-copy { font-size: 0.65rem; color: var(--text-dim); letter-spacing: 0.1em; }
+
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--accent); }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    .blink { animation: blink 1s step-end infinite; }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    @media (max-width: 768px) {
+      nav { padding: 1rem 1.5rem; }
+      nav ul { display: none; }
+      section { padding: 4rem 1.5rem; }
+      #about .about-grid { grid-template-columns: 1fr; }
+      .sponsor-grid { grid-template-columns: 1fr; }
+      footer { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <nav>
+    <div class="nav-logo">Pointeur<span>.</span>Corp</div>
+    <ul>
+      <li><a href="#about">À propos</a></li>
+      <li><a href="#team">Équipe</a></li>
+      <li><a href="#sponsors">Sponsors</a></li>
+    </ul>
+    <div class="nav-badge">Est. 2024</div>
+  </nav>
+
+  <section id="hero">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="scanline"></div>
+
+    <p class="hero-sub">// Innovation &nbsp;·&nbsp; Code &nbsp;·&nbsp; Excellence</p>
+    <h1 class="hero-glitch" data-text="POINTEUR CORP">POINTEUR<br>CORP</h1>
+    <p class="hero-desc">
+      Nous privilégions la qualité, l'innovation et le bien-être. Une équipe soudée qui relève chaque défi avec enthousiasme — née d'un premier cours de programmation, forgée par des années d'expérience.<span class="blink">_</span>
+    </p>
+    <div class="hero-cta">
+      <a href="#team" class="btn btn-primary">Notre équipe</a>
+      <a href="#about" class="btn btn-ghost">En savoir plus</a>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="about-grid">
+      <div>
+        <p class="section-label reveal">Qui sommes-nous</p>
+        <h2 class="section-title reveal">L'entreprise<br><em>qui ne recule pas</em></h2>
+        <div class="section-rule reveal"></div>
+        <p class="about-text reveal">
+          Au sein de la Pointeur Corp, nous ne parlons pas d'échec — mais de <strong style="color:var(--accent)">changement</strong>. Depuis notre premier cours de programmation, nous avons formé une équipe soudée, portée par l'enthousiasme et la volonté de satisfaire chaque client.
+          <br><br>
+          Des années de travail acharné nous ont permis d'accumuler une expertise solide et des résultats plus que satisfaisants. L'innovation n'est pas un mot dans notre vocabulaire — c'est une façon d'être.
+        </p>
+      </div>
+      <div class="about-stats">
+        <div class="stat-card reveal">
+          <div class="stat-num">5</div>
+          <div class="stat-label">Membres actifs</div>
+        </div>
+        <div class="stat-card reveal">
+          <div class="stat-num">0</div>
+          <div class="stat-label">Échecs acceptés</div>
+        </div>
+        <div class="stat-card reveal">
+          <div class="stat-num">∞</div>
+          <div class="stat-label">Lignes de code</div>
+        </div>
+        <div class="stat-card reveal">
+          <div class="stat-num">1</div>
+          <div class="stat-label">Vision commune</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="team">
+    <div class="inner">
+      <p class="section-label reveal">Notre équipe</p>
+      <h2 class="section-title reveal">Les architectes<br><em>du code</em></h2>
+      <div class="section-rule reveal"></div>
+
+      <div class="team-grid">
+
+        <div class="member-card reveal">
+          <span class="member-index">01</span>
+          <div class="avatar">
+            <img src="antho.png" alt="" onerror="this.style.display='none'">AG
+          </div>
+          <p class="member-role">Programmeur · Stratège</p>
+          <h3 class="member-name">Anthony Goffin</h3>
+          <p class="member-bio">Un programmeur en herbe que rien n'arrête — pas même un <code style="color:var(--accent)">return</code>. Ses conseils mènent l'équipe à la réussite et ses projets sont livrés en temps et en heure. Sa capacité à motiver est plus qu'impressionnante.</p>
+          <div class="member-tags">
+            <span class="tag">Leadership</span>
+            <span class="tag">Offensive</span>
+            <span class="tag">Ponctualité</span>
+          </div>
+        </div>
+
+        <div class="member-card reveal">
+          <span class="member-index">02</span>
+          <div class="avatar">
+            <img src="mohamed.png" alt="" onerror="this.style.display='none'">MB
+          </div>
+          <p class="member-role">Sécurité · Obfuscation</p>
+          <h3 class="member-name">Mohamed Boukhatem</h3>
+          <p class="member-bio">Notre programmeur le plus aguerri — rien ne lui échappe. Gardien de la sécurité des données, il repousse les hackers grâce à sa technique des variables obscures. On raconte qu'un <code style="color:var(--accent)">free</code> n'est qu'une option parmi d'autres.</p>
+          <div class="member-tags">
+            <span class="tag">Sécurité</span>
+            <span class="tag">Obfuscation</span>
+            <span class="tag">Anti-OpenSource</span>
+          </div>
+        </div>
+
+        <div class="member-card reveal">
+          <span class="member-index">03</span>
+          <div class="avatar">
+            <img src="alix.png" alt="" onerror="this.style.display='none'">AN
+          </div>
+          <p class="member-role">Analyse · Réinsertion</p>
+          <h3 class="member-name">Alix Neuveux</h3>
+          <p class="member-bio">Retrouvé sur la route de l'analyse, ce cher Alix est doté de capacités exceptionnelles. Victime d'un ancien employeur, nous croyons en la réinsertion. Lui croit surtout en un dieu omniscient.</p>
+          <div class="member-tags">
+            <span class="tag">Analyse</span>
+            <span class="tag">Résilience</span>
+            <span class="tag">Omniscience</span>
+          </div>
+        </div>
+
+        <div class="member-card danger reveal">
+          <span class="member-index">04</span>
+          <div class="avatar" style="color:var(--accent2); border-color: rgba(255,56,100,0.3)">
+            <img src="missingdata.png" alt="" onerror="this.style.display='none'">?
+          </div>
+          <p class="member-role">Statut · Inconnu</p>
+          <h3 class="member-name">Missing Data</h3>
+          <p class="member-bio">Un véritable traître — certains diront porté disparu. Les dossiers sont classifiés. Les logs ont été effacés. Mais ici, <span style="color:var(--accent2)">nous savons tout</span>.</p>
+          <div class="member-tags">
+            <span class="tag">Classifié</span>
+            <span class="tag">Disparu</span>
+            <span class="tag">Surveillé</span>
+          </div>
+        </div>
+
+        <div class="member-card gold reveal">
+          <span class="member-index" style="color:var(--accent3)">05</span>
+          <div class="avatar" style="color:var(--accent3); border-color: rgba(245,197,24,0.3)">
+            <img src="sacha.png" alt="" onerror="this.style.display='none'">SI
+          </div>
+          <p class="member-role">CEO · Débogueur en Chef</p>
+          <h3 class="member-name">Sacha Ismailov</h3>
+          <p class="member-bio">Le gentil patron. Le grand, le sublime, l'incroyable. Ses interventions sont presque divines — il aide à la compréhension et à la vulgarisation. <code style="color:var(--accent3)">#boucleOnItself</code>. Le présenter davantage augmenterait artificiellement la taille de cette page.</p>
+          <div class="member-tags">
+            <span class="tag">Direction</span>
+            <span class="tag">Debug</span>
+            <span class="tag">Divin</span>
+            <span class="tag">Vulgarisation</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section id="sponsors">
+    <div class="inner">
+      <p class="section-label reveal">Partenaires</p>
+      <h2 class="section-title reveal">Nos sponsors</h2>
+      <div class="section-rule reveal" style="margin: 0 auto 3rem;"></div>
+
+      <div class="sponsor-ticker">
+        <div class="ticker-track">
+          <span class="ticker-item">Sponsor <span>·</span> Partenaire <span>·</span> Allié <span>·</span></span>
+          <span class="ticker-item">Innovation <span>·</span> Tech <span>·</span> Code <span>·</span></span>
+          <span class="ticker-item">Sponsor <span>·</span> Partenaire <span>·</span> Allié <span>·</span></span>
+          <span class="ticker-item">Innovation <span>·</span> Tech <span>·</span> Code <span>·</span></span>
+          <span class="ticker-item">Sponsor <span>·</span> Partenaire <span>·</span> Allié <span>·</span></span>
+          <span class="ticker-item">Innovation <span>·</span> Tech <span>·</span> Code <span>·</span></span>
+        </div>
+      </div>
+
+      <div class="sponsor-grid reveal">
+        <div class="sponsor-cell sponsor-img-cell">
+          <img src="https://i.pinimg.com/736x/a7/5d/55/a75d552ca60dc99682ba8a121513ef79.jpg" alt="Sponsor principal">
+        </div>
+        <div class="sponsor-cell">
+          <div class="sponsor-logo">Partenaire<br><span style="font-size:0.6em;letter-spacing:0.2em;color:var(--text-dim)">À VENIR</span></div>
+        </div>
+        <div class="sponsor-cell">
+          <div class="sponsor-logo">Partenaire<br><span style="font-size:0.6em;letter-spacing:0.2em;color:var(--text-dim)">À VENIR</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-logo">Pointeur<span>.</span>Corp</div>
+    <div class="footer-copy">© 2024 Pointeur Corp — Tous droits réservés</div>
+    <div class="footer-links">
+      <a href="#hero">Accueil</a>
+      <a href="#about">À propos</a>
+      <a href="#team">Équipe</a>
+    </div>
+  </footer>
+
+  <script>
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.left = mx - 6 + 'px';
+      cursor.style.top = my - 6 + 'px';
+    });
+
+    function animRing() {
+      rx += (mx - rx) * 0.12;
+      ry += (my - ry) * 0.12;
+      ring.style.left = rx - 18 + 'px';
+      ring.style.top = ry - 18 + 'px';
+      requestAnimationFrame(animRing);
+    }
+    animRing();
+
+    document.querySelectorAll('a, button, .btn, .member-card, .stat-card').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        cursor.style.transform = 'scale(2)';
+        ring.style.transform = 'scale(1.5)';
+        ring.style.opacity = '0.2';
+      });
+      el.addEventListener('mouseleave', () => {
+        cursor.style.transform = 'scale(1)';
+        ring.style.transform = 'scale(1)';
+        ring.style.opacity = '0.5';
+      });
+    });
+
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    reveals.forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
